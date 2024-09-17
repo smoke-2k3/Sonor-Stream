@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:title="Settings">
+
+    <PreferenceCategory
+        android:title="Preference category"
+        app:iconSpaceReserved="false">
+
+    </PreferenceCategory>
+    <Preference
+        app:iconSpaceReserved="false"
+        app:key="todo"
+        app:summary="Also change this shit to material 3 design"
+        app:title="TODO: Implement this portion" />
+    <PreferenceCategory
+        android:title="Preference category"
+        app:iconSpaceReserved="false">
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="14dp"
+    android:width="19dp"
+    android:viewportHeight="97"
+    android:viewportWidth="123" >
+    <path
+        android:name="bar"
+        android:fillColor="#5A5A5A"
+        android:pathData="M8.94 0h105a8.96 8.96 0 0 1 8.94 8.94 8.96 8.96 0 0 1-8.94 8.94h-105A8.96 8.96 0 0 1 0 8.94 8.96 8.96 0 0 1 8.94 0zm0 78.07h105a8.96 8.96 0 0 1 8.94 8.94 8.96 8.96 0 0 1-8.94 8.94h-105A8.96 8.96 0 0 1 0 87.01a8.96 8.96 0 0 1 8.94-8.94zm0-39.04h105a8.96 8.96 0 0 1 8.94 8.94 8.96 8.96 0 0 1-8.94 8.94h-105A8.96 8.96 0 0 1 0 47.97a8.97 8.97 0 0 1 8.94-8.94z" />
+</vector>
