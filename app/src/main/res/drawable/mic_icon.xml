@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="40dp"
+    android:width="40dp"
+    android:viewportHeight="1024"
+    android:viewportWidth="1024" >
+    <path
+        android:name="mic"
+        android:fillColor="#5A5A5A"
+        android:pathData="M512 640c75.4 0 137.1-61.8 137.1-137.4V201.4C649.1 125.8 587.4 64 512 64s-137.1 61.8-137.1 137.4v301.2c0 75.6 61.7 137.4 137.1 137.4zm242.3-150.9c0 137.4-116.6 233.6-242.3 233.6s-242.3-96.2-242.3-233.6H192c0 155.7 123.4 286.3 274.3 307V960h91.4V796C708.6 773.1 832 644.8 832 489.1h-77.7z" />
+</vector>

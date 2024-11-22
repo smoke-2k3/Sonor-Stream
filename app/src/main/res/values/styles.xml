@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="app_title">
+        <item name="android:textSize">23sp</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <!-- <item name="fontFamily">@font/expletus</item> -->
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="server_field">
+        <item name="android:textSize">18sp</item>
+        <!-- <item name="fontFamily">@font/expletus</item> -->
+        <item name="android:textColor">@color/server_feild_names</item>
+    </style>
+
+    <style name="server_field_value">
+        <item name="android:textSize">18sp</item>
+        <!-- <item name="fontFamily">@font/expletus</item> -->
+        <item name="android:textColor">@color/server_feild_values</item>
+    </style>
+
+    <style name="Expanded_toolbar_text">
+        <item name="android:textSize">36sp</item>
+    </style>
+    <style name="splash_text">
+        <item name="fontFamily">@font/bree_serif</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+</resources>

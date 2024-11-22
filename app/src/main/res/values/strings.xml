@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Sonor  Stream</string>
+    <string name="receive">Receive</string>
+    <string name="stream">Stream</string>
+</resources>

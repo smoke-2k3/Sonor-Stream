@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/appbar2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimaryVariant"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:menu="@menu/top_app_bar"
+        app:title="SonorStream"
+        app:titleCentered="false"
+        app:titleTextAppearance="@style/app_title" />
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center"
+        app:checkedButton="@id/stream_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appbar2"
+        app:selectionRequired="true"
+        app:singleSelection="true">
+
+        <Button
+            android:id="@+id/stream_button"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="150dp"
+            android:layout_height="match_parent"
+            android:text="@string/stream"
+            app:cornerRadius="19dp"
+            app:strokeColor="@android:color/secondary_text_light" />
+
+        <Button
+            android:id="@+id/receive_button"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="140dp"
+            android:layout_height="match_parent"
+            android:backgroundTintMode="multiply"
+            android:text="@string/receive"
+            app:cornerRadius="19dp"
+            app:strokeColor="#FF1F1F1F" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toggleButton" />
+
+    <!-- FloatingActionButton for settings -->
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/fab_settings"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_margin="0dp"-->
+<!--        android:contentDescription="Settings"-->
+<!--        app:backgroundTint="@android:color/primary_text_dark_nodisable"-->
+<!--        app:borderWidth="0dp"-->
+<!--        app:elevation="0dp"-->
+<!--        app:hoveredFocusedTranslationZ="0dp"-->
+<!--        app:layout_constraintBottom_toBottomOf="@+id/toggleButton"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toEndOf="@+id/toggleButton"-->
+<!--        app:layout_constraintTop_toTopOf="@+id/toggleButton"-->
+<!--        app:pressedTranslationZ="0dp"-->
+<!--        app:rippleColor="@color/black"-->
+<!--        app:srcCompat="@drawable/ic_settings"-->
+<!--        app:tint="@color/black" />-->
+
+</androidx.constraintlayout.widget.ConstraintLayout>
