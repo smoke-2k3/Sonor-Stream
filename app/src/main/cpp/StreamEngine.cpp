@@ -14,15 +14,15 @@
 #include <chrono>
 #include <netdb.h>
 #include <net/if.h>
-#include <cstring>
 #include <sys/ioctl.h>
 #include <cerrno>
 #include <iostream>
+#include <mutex>
+#include <vector>
 #include "SocketInit.h"
 #include "Constants.h"
 #include "libmpg123/mpg123.h"
 //#include "OboeMicRecorder.cpp" // change to .h
-#include <vector>
 //#include "ClientCommThread.cpp" // change to .h
 
 // Global variables
@@ -30,6 +30,7 @@ int sockfd;
 int sndSocket;
 struct sockaddr_in destAddr{};
 std::vector<struct sockaddr_in> clientList;
+std::mutex clientListMutex;
 
 bool issysAudioThreadRunning = false;
 
@@ -56,8 +57,29 @@ Java_com_classic_sonorstream_StreamService_send_1natively(JNIEnv *env, jobject t
                                                           jshortArray array) {
     jshort *shortElements = env->GetShortArrayElements(array, nullptr);
     size_t byteLength = env->GetArrayLength(array) * sizeof(jshort);
-    for (auto &&i : clientList) {
-        sendto(sndSocket, shortElements, byteLength, 0, (struct sockaddr *)&i, sizeof(i));
+    {
+        std::lock_guard<std::mutex> lock(clientListMutex);
+        int numClients = clientList.size();
+        
+        if (numClients > 0) {
+            // Variable Length Array (VLA) for message headers
+            struct mmsghdr msgvec[numClients];
+            struct iovec iov[1];
+            
+            iov[0].iov_base = shortElements;
+            iov[0].iov_len = byteLength;
+
+            for (int i = 0; i < numClients; i++) {
+                memset(&msgvec[i], 0, sizeof(struct mmsghdr));
+                msgvec[i].msg_hdr.msg_name = &clientList[i];
+                msgvec[i].msg_hdr.msg_namelen = sizeof(struct sockaddr_in);
+                msgvec[i].msg_hdr.msg_iov = iov;
+                msgvec[i].msg_hdr.msg_iovlen = 1;
+            }
+
+            // Send to all clients simultaneously in a single kernel system call
+            sendmmsg(sndSocket, msgvec, numClients, 0);
+        }
     }
     env->ReleaseShortArrayElements(array, shortElements, 0);
 }
@@ -75,7 +97,10 @@ Java_com_classic_sonorstream_StreamService_addClientNative(JNIEnv *env, jobject 
     destAddr.sin_family = AF_INET;
     destAddr.sin_port = htons(14444); // Set the destination port
     destAddr.sin_addr.s_addr = inet_addr(ipAddress); // Set the destination IP address
-    clientList.push_back(destAddr);
+    {
+        std::lock_guard<std::mutex> lock(clientListMutex);
+        clientList.push_back(destAddr);
+    }
     env->ReleaseStringUTFChars(ip, ipAddress);
 }
 
@@ -84,10 +109,13 @@ JNIEXPORT void JNICALL
 Java_com_classic_sonorstream_ClientListManager_removeClientNative(JNIEnv *env, jobject thiz,
                                                                   jstring ip) {
     const char *ipAddress = env->GetStringUTFChars(ip, nullptr);
-    for (int i = 0; i < clientList.size(); i++) {
-        if (clientList[i].sin_addr.s_addr == inet_addr(ipAddress)) {
-            clientList.erase(clientList.begin() + i);
-            break;
+    {
+        std::lock_guard<std::mutex> lock(clientListMutex);
+        for (int i = 0; i < clientList.size(); i++) {
+            if (clientList[i].sin_addr.s_addr == inet_addr(ipAddress)) {
+                clientList.erase(clientList.begin() + i);
+                break;
+            }
         }
     }
     env->ReleaseStringUTFChars(ip, ipAddress);

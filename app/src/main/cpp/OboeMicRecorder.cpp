@@ -3,7 +3,7 @@
 //
 
 #include <oboe/Oboe.h>
-#include "SocketInit.cpp"
+#include "SocketInit.h"
 #include <cstdio>
 #include <fstream>
 

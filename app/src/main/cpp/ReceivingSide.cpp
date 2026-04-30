@@ -107,6 +107,10 @@ bool initSocket(const char * serverIP) {
         return false;
     }
 
+    // Tune socket buffer for low latency
+    int rcvBufSize = 8192;
+    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &rcvBufSize, sizeof(rcvBufSize));
+
     // ssize_t bytesRead = recvfrom(sock, buffer, BUFFER_SIZE, 0,(struct sockaddr*)&clientAddr, &clientAddrLen);
     sendto(sock, "hello", strlen("hello"),0, (const struct sockaddr *) &addr,sizeof(addr));
     __android_log_print(ANDROID_LOG_DEBUG, DEBUG_TAG, "%s","Sent message");
@@ -140,9 +144,10 @@ void receiveAudioPackets() {
     player.start();
     short buffer[numSamples];
     while (isrecv) {
-        recvfrom(sock, buffer, numSamples * sizeof(short), 0,(struct sockaddr*) &addr,&len);
-        for (short & i : buffer) {
-            player.lfQueue.push(i);
+        ssize_t received = recvfrom(sock, buffer, numSamples * sizeof(short), 0,(struct sockaddr*) &addr,&len);
+        if (received > 0) {
+            int samplesReceived = received / sizeof(short);
+            player.lfQueue.bulkPush(buffer, samplesReceived);
         }
         /*
         //buffer[0] = packet type/Payload Type
@@ -204,10 +209,13 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_classic_sonorstream_ReceiveService_start(JNIEnv *env, __attribute__((unused)) jobject thiz, jstring ip) {
     // Initialize the UDP socket and join the multicast group
-    if (!initSocket(env->GetStringUTFChars( ip,nullptr))) {
+    const char* ipStr = env->GetStringUTFChars(ip, nullptr);
+    if (!initSocket(ipStr)) {
+        env->ReleaseStringUTFChars(ip, ipStr);
         std::cerr << "Failed to initialize socket." << std::endl;
         return;
     }
+    env->ReleaseStringUTFChars(ip, ipStr);
     // Start a new thread for audio reception
     std::thread audioThread(receiveAudioPackets);
     audioThread.detach();

@@ -80,8 +80,9 @@ void ClientCommThread::startCommThread() {
             case 'P' : {
                 //Ping packet reply. Send 2 times if packet lost somewhere.
                 //Also handle newly connected client list.
-                ssize_t bytesSent = sendto(uniSock, reinterpret_cast<const void *const>('R'), 1, 0, (struct sockaddr*)&clientAddr, clientAddrLen);
-                sendto(uniSock, reinterpret_cast<const void *const>('R'), 1, 0, (struct sockaddr*)&clientAddr, clientAddrLen);
+                char reply = 'R';
+                ssize_t bytesSent = sendto(uniSock, &reply, 1, 0, (struct sockaddr*)&clientAddr, clientAddrLen);
+                sendto(uniSock, &reply, 1, 0, (struct sockaddr*)&clientAddr, clientAddrLen);
                 if (bytesSent < 0) {
                     std::cerr << "Failed to send reply." << std::endl;
                 }
@@ -224,9 +225,12 @@ void ClientCommThread::startFileTransmission(const char *path)  {
     // Clean up resources
     fileTransferRunning = false;
     delete[] packet;
-    delete[] buffer;
+    free(buffer);
     delete[] pcm_buffer;
-    delete[] audioHeadPacket;
+    if (audioHeadPacket) {
+        delete[] audioHeadPacket;
+        audioHeadPacket = nullptr;
+    }
     audioHeadPacketPresent = false;
     mpg123_close(mpg123);
     mpg123_delete(mpg123);
@@ -262,5 +266,8 @@ void ClientCommThread::stopServer() {
     commThreadRunning = false;
 
     //SocketInit::del_socket();
-    delete[] audioHeadPacket;
+    if (audioHeadPacket) {
+        delete[] audioHeadPacket;
+        audioHeadPacket = nullptr;
+    }
 }

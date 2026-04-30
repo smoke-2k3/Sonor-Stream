@@ -344,11 +344,37 @@ public class StreamActivity extends Fragment {
     private void startMediaProjectionRequest() {
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) requireActivity().getApplication()
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        startActivityForResult(
-                mediaProjectionManager.createScreenCaptureIntent(),
-                CAPTURE_MEDIA_PROJECTION_REQUEST_CODE
+        mediaProjectionLauncher.launch(
+                mediaProjectionManager.createScreenCaptureIntent()
         );
     }
+
+    private final ActivityResultLauncher<Intent> mediaProjectionLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    stream.setIcon(ContextCompat.getDrawable(requireActivity(), R.drawable.stop_icon));
+                    stream.setPadding((int) convertDpToPixel(15,requireActivity()),0,0,0);
+                    Toast.makeText(requireActivity(),
+                            "MediaProjection permission obtained. Foreground service will be started to capture audio.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    audioCaptureIntent = new Intent(getActivity(), StreamService.class);
+                    audioCaptureIntent.setAction(ACTION_START);
+                    audioCaptureIntent.putExtra(EXTRA_RESULT_DATA, result.getData());
+                    requireActivity().startForegroundService(audioCaptureIntent);
+                } else {
+                    stream.setIcon(ContextCompat.getDrawable(requireActivity(), R.drawable.play_icon));
+                    stream.setPadding((int) convertDpToPixel(17,requireActivity()),0,0,0);
+                    streaming = false;
+                    Toast.makeText(requireActivity(),
+                            "Request to obtain MediaProjection denied.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+            }
+    );
 
     private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -401,33 +427,7 @@ public class StreamActivity extends Fragment {
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAPTURE_MEDIA_PROJECTION_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
-                stream.setIcon(ContextCompat.getDrawable(requireActivity(), R.drawable.stop_icon));
-                stream.setPadding((int) convertDpToPixel(15,requireActivity()),0,0,0);
-                Toast.makeText(requireActivity(),
-                        "MediaProjection permission obtained. Foreground service will be started to capture audio.",
-                        Toast.LENGTH_SHORT
-                ).show();
 
-                audioCaptureIntent = new Intent(getActivity(), StreamService.class);
-                audioCaptureIntent.setAction(ACTION_START);
-                audioCaptureIntent.putExtra(EXTRA_RESULT_DATA, data);
-                requireActivity().startForegroundService(audioCaptureIntent);
-
-            } else {
-                stream.setIcon(ContextCompat.getDrawable(requireActivity(), R.drawable.play_icon));
-                stream.setPadding((int) convertDpToPixel(17,requireActivity()),0,0,0);
-                Toast.makeText(requireActivity(),
-                        "Request to obtain MediaProjection denied.",
-                        Toast.LENGTH_SHORT
-                ).show();
-            }
-        }
-    }
 
     public static float convertDpToPixel(float dp, Context context){
         return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
@@ -443,8 +443,11 @@ public class StreamActivity extends Fragment {
     public static boolean isConnectedToWifi(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (connectivityManager != null) {
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-            return networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI;
+            Network activeNetwork = connectivityManager.getActiveNetwork();
+            if (activeNetwork != null) {
+                NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(activeNetwork);
+                return caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+            }
         }
         return false;
     }

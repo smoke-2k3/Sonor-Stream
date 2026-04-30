@@ -30,7 +30,6 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
@@ -44,6 +43,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 
@@ -65,7 +65,6 @@ public class StreamService extends Service {
         System.loadLibrary("native-lib");
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -119,10 +118,10 @@ public class StreamService extends Service {
         if (intent == null) {
             return Service.START_NOT_STICKY;
         } else {
-            switch (intent.getAction()) {
+            switch (Objects.requireNonNull(intent.getAction())) {
                 case Constants.ACTION_START: {
                     mediaProjection = mediaProjectionManager.getMediaProjection(Activity.RESULT_OK,
-                            intent.getParcelableExtra(Constants.EXTRA_RESULT_DATA));
+                            Objects.requireNonNull(intent.getParcelableExtra(Constants.EXTRA_RESULT_DATA)));
                     switch (StreamActivity.streamMode){
                         case 0: { //System audio
                             startAudioCapture();
@@ -181,8 +180,6 @@ public class StreamService extends Service {
         }
 
         audioRecord.startRecording();
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
 
         audioCaptureThread = new Thread(() -> {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -385,8 +382,6 @@ public class StreamService extends Service {
         String data = getLocalIpAddress()+"\n"+"14444"+"\n"+StreamActivity.serverDisplayName; //uni-cast port
         new Thread(() -> {
             DatagramSocket broadcastSocket = null;
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
             try {
                 broadcastSocket = new DatagramSocket();
                 broadcastSocket.setBroadcast(true);

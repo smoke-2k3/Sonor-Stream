@@ -3,15 +3,16 @@ package com.classic.sonorstream;
 import android.os.Handler;
 import android.os.Looper;
 
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ServerListManager {
-    private Map<String, Long> serverLastHeartbeat = new HashMap<>();
-    private ScheduledExecutorService heartbeatScheduler = Executors.newScheduledThreadPool(1);
+    private final ConcurrentHashMap<String, Long> serverLastHeartbeat = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService heartbeatScheduler = Executors.newScheduledThreadPool(1);
     private static final long HEARTBEAT_INTERVAL = 5000; // Heartbeat interval in milliseconds
     private static final long TIMEOUT_THRESHOLD = 2 * HEARTBEAT_INTERVAL; // Timeout threshold in milliseconds
 
@@ -28,12 +29,15 @@ public class ServerListManager {
     private void checkServerStatus() {
         long currentTime = System.currentTimeMillis();
 
-        for (String serverAddress : serverLastHeartbeat.keySet()) {
-            long lastHeartbeat = serverLastHeartbeat.get(serverAddress);
-            long elapsedTime = currentTime - lastHeartbeat;
+        Iterator<Map.Entry<String, Long>> iterator = serverLastHeartbeat.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Long> entry = iterator.next();
+            long elapsedTime = currentTime - entry.getValue();
 
             if (elapsedTime > TIMEOUT_THRESHOLD) {
                 // Server is inactive, handle accordingly
+                String serverAddress = entry.getKey();
+                iterator.remove();
                 handleInactiveServer(serverAddress);
             }
         }
@@ -43,7 +47,6 @@ public class ServerListManager {
         // Perform actions when a server becomes inactive
         Handler mainHandler = new Handler(Looper.getMainLooper());
         System.out.println("Server " + serverAddress + " is inactive.");
-        serverLastHeartbeat.remove(serverAddress);
         ReceiveActivity.server_data_list.remove(serverAddress);
         mainHandler.post(() -> ReceiveActivity.sla.notifyItemRangeRemoved(0,ReceiveActivity.server_data_list.size()+1));
 

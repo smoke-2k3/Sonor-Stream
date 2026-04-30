@@ -1,2 +1,35 @@
-# Project exclude paths
-/.gradle/
+# Gradle build artifacts
+.gradle/
+build/
+app/build/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Local properties (contains SDK/NDK paths)
+local.properties
+
+# Android Studio captures
+captures/
+
+# NDK build artifacts
+.cxx/
+app/.cxx/
+.externalNativeBuild/
+obj/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Sensitive info
+google-services.json
+
+# Performance profiling
+*.hprof

@@ -1,0 +1,36 @@
+Viewed StreamService.java:187-223
+
+These are excellent architectural questions. Let's break this down into three parts: **Native vs. Java latency**, **the cost of looping**, and **the ultimate solution for multi-device streaming**.
+
+### 1. Should you send individual packets in Java or Native (C++)?
+**You should keep the sending loop in Native (C++).** 
+
+If you were to send individual packets in Java, you would need to create a `DatagramPacket` object and call `DatagramSocket.send()` for every single client, 100+ times per second. Doing this in Java creates objects rapidly, which eventually triggers the **Garbage Collector (GC)**. A GC pause on Android can freeze your thread for 5–20ms, causing massive audio dropouts and latency spikes.
+
+Native C++ `sendto()` uses pre-allocated memory, avoids the garbage collector completely, and executes raw system calls directly. Even though crossing the JNI bridge from Java to C++ has a tiny cost (~1-2 microseconds), doing that once per read and looping in C++ is much faster than looping in Java.
+
+### 2. Is there a better way to send to multiple devices? (O(1) Latency)
+Yes! Right now, you are using **Unicast** (sending individually). If you have 10 clients, your thread has to do the `sendto()` system call 10 times. The 10th client gets the audio slightly later than the 1st client, which ruins perfect synchronization.
+
+There is a built-in networking feature designed exactly for this: **IP Multicast**.
+
+#### How Multicast Works:
+Instead of sending 10 packets to 10 different IP addresses, your server sends **exactly 1 packet** to a special Multicast IP address (e.g., `224.0.0.1`). 
+The WiFi router automatically duplicates that single packet at the hardware level and beams it to all 10 receivers simultaneously.
+* **Latency Cost for 1 client:** ~1ms
+* **Latency Cost for 100 clients:** ~1ms (It literally takes the exact same amount of time).
+
+*Note: You are actually already using Multicast for your discovery/heartbeat system in `StreamService`! You can use the exact same concept for the high-speed audio data.*
+
+### 3. What if you must use Unicast? (Advanced Linux API)
+If you decide you don't want to use Multicast (because some cheap WiFi routers throttle multicast traffic), there is an advanced Linux function explicitly designed to lower the latency of sending multiple UDP packets:
+
+**`sendmmsg()` (Send Multiple Messages)**
+Standard `sendto()` requires one "Context Switch" (crossing from your app into the OS kernel) per packet. Context switches are slow. 
+`sendmmsg()` allows you to hand the Linux kernel an array of destinations and the audio payload, and it sends them all in **a single system call**. 
+
+### The Ultimate Recommendation for "Lowest Possible Latency"
+If you want professional-grade latency (like SoundWire or AudioRelay):
+1. **Move Audio Capture to C++**: Instead of using Java's `AudioRecord`, use Android's native **Oboe** library to capture the system audio/mic. 
+2. **Eliminate JNI**: By capturing in C++ and sending in C++, you eliminate the JNI bridge completely. The audio goes: `Microphone -> C++ Buffer -> C++ Socket` in under 2ms.
+3. **Use Multicast**: Send the data once. Let the router do the heavy lifting.

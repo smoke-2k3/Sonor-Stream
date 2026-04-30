@@ -92,11 +92,11 @@ public:
             return false; // Not enough elements in the queue
         }
 
-        // Copy the elements from the queue to the output array
+        INDEX_TYPE currentRead = readCounter.load(std::memory_order_relaxed);
         for (size_t i = 0; i < numElements; ++i) {
-            outputArray[i] = buffer[readCounter];
-            readCounter = (readCounter + 1) % CAPACITY;
+            outputArray[i] = buffer[mask(currentRead + i)];
         }
+        readCounter.store(currentRead + numElements, std::memory_order_release);
 
         return true;
     }
@@ -119,16 +119,18 @@ public:
         }
     }
 
-    __attribute__((unused)) bool bulkPush(const T* item, size_t size) {
-        if (size > writeCounter - readCounter) {
+    bool bulkPush(const T* item, size_t numElements) {
+        if (numElements > CAPACITY - size()) {
             __android_log_print(ANDROID_LOG_DEBUG, DEBUG_TAG, "%s",
                                 "Not Enough space");
             return false;
         }
 
-        // Copy the byte array directly to the queue's internal buffer
-        std::memcpy(buffer + writeCounter, item, size * sizeof(T));
-        writeCounter = (writeCounter + size) % CAPACITY;
+        INDEX_TYPE currentWrite = writeCounter.load(std::memory_order_relaxed);
+        for (size_t i = 0; i < numElements; ++i) {
+            buffer[mask(currentWrite + i)] = item[i];
+        }
+        writeCounter.store(currentWrite + numElements, std::memory_order_release);
 
         return true;
     }

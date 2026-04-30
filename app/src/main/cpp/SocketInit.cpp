@@ -1,18 +1,26 @@
 
 #include "SocketInit.h"
+#include <netinet/ip.h>
 
 //Mode 0: Uni-cast socket
 //Mode 1: Multicast Socket
 //Mode 2: Broadcast Socket
 int SocketInit::init_socket(int mode) {
     // Create a UDP socket
-    static int sockfd = -1;
+    int sockfd = -1;
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         __android_log_print(ANDROID_LOG_ERROR, "AudioStreamer", "Failed to create socket");
         return -1;
     }
     else __android_log_print(ANDROID_LOG_ERROR, "AudioStreamer", "Socket Created");
+
+    // Tune socket buffer for low latency
+    int sndBufSize = 8192;
+    setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &sndBufSize, sizeof(sndBufSize));
+    // Set low-delay QoS marking
+    int tos = IPTOS_LOWDELAY;
+    setsockopt(sockfd, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
 
     //Unicast config
     memset(&serverAddress, 0, sizeof(serverAddress));

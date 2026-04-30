@@ -9,7 +9,6 @@
 #include <utility>
 #include "LockFreeQueue.h"
 #include "Constants.h"
-#include "OboePlayer.h"
 
 class OboePlayer : public oboe::AudioStreamCallback {
 public:
@@ -20,7 +19,7 @@ public:
     LockFreeQueue<short,PLAYER_BUFFER> lfQueue;
     void setChannel(int ch);
     void setRate(long rate);
-    void setLowBufferCallback(std::function<void()> callback);  // Set the callback function
+    //void setLowBufferCallback(std::function<void()> callback);  // Set the callback function
 
 private:
     oboe::AudioStream* mStream;
@@ -30,7 +29,7 @@ private:
     int channel = 1;
     oboe::AudioStreamBuilder builder;
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* audioStream, void* audioData, int32_t numFrames) override;
-    std::function<void()> lbc;  // Callback function to be called
+    //std::function<void()> lbc;  // Callback function to be called
 };
 
 #endif //SONOR_STREAM_OBOEPLAYER_H
